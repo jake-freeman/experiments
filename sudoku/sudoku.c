@@ -38,6 +38,8 @@ static puzzle_t *search(puzzle_t *puz);
 static puzzle_t *assign(puzzle_t *puz, int row, int col, char val);
 static puzzle_t *eliminate(puzzle_t *puz, int row, int col, char val);
 
+static void set_init_vals(puzzle_t *puz, int row, int col, char val);
+
 /*************************/
 /* Public solve function */
 /*************************/
@@ -56,7 +58,16 @@ void solve(unsigned char grid[9][9]) {
 /*******************************************/
 
 static puzzle_t *create_puzzle(unsigned char vals[9][9]) {
-  return NULL;
+  puzzle_t *puz = malloc(sizeof(puzzle_t));
+  int x, y;
+  for (x = 0; x < NUM_DIGITS; x++) {
+    for (y = 0; y < NUM_DIGITS; y++) {
+      set_init_vals(puz, x, y, vals[x][y]);
+      puz->squares[x][y].row = y;
+      puz->squares[x][y].col = x;
+    }
+  }
+  return puz;
 }
 
 static void init_peers(puzzle_t *puz, int row, int col) {
@@ -73,8 +84,8 @@ void print_puzzle(puzzle_t *p) {
   int i, j;
   for (i=0; i<NUM_ROWS; i++) {
     for (j=0; j<NUM_COLS; j++) {
-      //printf(" %9s", p->squares[i][j].vals); // may be useful while debugging
-      printf(" %2s", p->squares[i][j].vals);
+      printf(" %9s", p->squares[i][j].vals); // may be useful while debugging
+      //printf(" %2s", p->squares[i][j].vals);
     }
     printf("\n");
   }
@@ -85,7 +96,8 @@ void print_puzzle(puzzle_t *p) {
 /**********/
 
 static puzzle_t *search(puzzle_t *puz) {
-  return NULL;
+  // short circuit to print puzzle
+  return puz;
 }
 
 /**************************/
@@ -103,3 +115,14 @@ static puzzle_t *eliminate(puzzle_t *puz, int row, int col, char val) {
 /*****************************************/
 /* Misc (e.g., utility) functions follow */
 /*****************************************/
+static void set_init_vals(puzzle_t *puz, int row, int col, char val) {
+  if (val >= '1' && val <= '9') {
+    // assign vals as the digit
+    puz->squares[row][col].vals[0] = val;
+    puz->squares[row][col].vals[1] = '\0';
+  }
+  else {
+    // copy list of digits in to vals
+    strncpy(puz->squares[row][col].vals, DIGITS, NUM_DIGITS + 1);
+  }
+}

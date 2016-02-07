@@ -1,0 +1,23 @@
+.DS_Store
+*.o
+*.gch
+*.pch
+*.out
+*.dSYM/
+.#*
+
+# executables
+a.out
+hello
+sudoku
+myint
+myspin
+mysplit
+mystop
+tsh
+cachesim
+
+# test files
+test.c
+build.sh
+test.sh
