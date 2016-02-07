@@ -63,14 +63,43 @@ static puzzle_t *create_puzzle(unsigned char vals[9][9]) {
   for (x = 0; x < NUM_DIGITS; x++) {
     for (y = 0; y < NUM_DIGITS; y++) {
       set_init_vals(puz, x, y, vals[x][y]);
-      puz->squares[x][y].row = y;
-      puz->squares[x][y].col = x;
+      init_peers(puz, x, y);
     }
   }
   return puz;
 }
 
 static void init_peers(puzzle_t *puz, int row, int col) {
+  // p is current peer index
+  int x,y,p = 0;
+  // first unit
+  for (x = 0; x < NUM_COLS; x++) {
+    puz->squares[row][col].units[0][x] = &puz->squares[row][x];
+    if (x != col) {
+      puz->squares[row][col].peers[p++] = &puz->squares[row][x];
+    }
+  }
+
+  // second unit
+  for (y = 0; y < NUM_ROWS; y++) {
+    puz->squares[row][col].units[1][y] = &puz->squares[y][col];
+    if (y != row) {
+      puz->squares[row][col].peers[p++] = &puz->squares[y][col];
+    }
+  }
+
+  // third unit
+  int top  = row - (row % 3);
+  int left = col - (col % 3);
+  int k = 0;
+  for (x = top; x < NUM_UNITS + top; x++) {
+    for (y = left; y < NUM_UNITS + left; y++) {
+      puz->squares[row][col].units[2][k++] = &puz->squares[x][y];
+      if ((x != row) && (y != col)) {
+        puz->squares[row][col].peers[p++] = &puz->squares[x][y];
+      }
+    }
+  }
 }
 
 static void free_puzzle(puzzle_t *puz) {
@@ -125,4 +154,6 @@ static void set_init_vals(puzzle_t *puz, int row, int col, char val) {
     // copy list of digits in to vals
     strncpy(puz->squares[row][col].vals, DIGITS, NUM_DIGITS + 1);
   }
+  puz->squares[row][col].row = row;
+  puz->squares[row][col].col = col;
 }
