@@ -205,7 +205,7 @@ static int eliminate(puzzle_t *puz, int row, int col, char val) {
       if (strchr(puz->squares[row][col].units[u][d]->vals, val)) {
         d_places ++;
       }
-      if (d_places) ;
+      if (d_places == 1) ;
       // [TODO: Create proper implementation of this]
     }
   }
@@ -229,10 +229,10 @@ static void set_init_vals(puzzle_t *puz, int row, int col, char val) {
 }
 
 static void remove_char(char *str, const char rem) {
-    char *src, *dst;
-    for (src = dst = str; *src != '\0'; src++) {
-        *dst = *src;
-        if (*dst != rem) dst++;
-    }
-    *dst = '\0';
+  char *src, *dst;
+  for (src = dst = str; *src != '\0'; src++) {
+    *dst = *src;
+    if (*dst != rem) dst++;
+  }
+  *dst = '\0';
 }
