@@ -35,8 +35,7 @@ static void free_puzzle(puzzle_t *puz);
 static void print_puzzle(puzzle_t *);
 
 static puzzle_t *search(puzzle_t *puz);
-static int assign(puzzle_t *puz, int row, int col, char val);
-static int eliminate(puzzle_t *puz, int row, int col, char val);
+static int eliminate(puzzle_t *puz, int row, int col);
 
 static void set_init_vals(puzzle_t *puz, int row, int col, char val);
 static void remove_char(char *str, const char rem);
@@ -136,20 +135,15 @@ void print_puzzle(puzzle_t *p) {
 /**********/
 
 static puzzle_t *search(puzzle_t *puz) {
-  // short circuit to print puzzle
-  int row, col;
+  int row, col, i;
   char *vals;
-  for (row = 0; row < NUM_ROWS; row++) {
-    for (col = 0; col < NUM_COLS; col++) {
-      vals = puz->squares[row][col].vals;
-      //if (strlen(vals) == 1)
-      puzzle_t *new_puz = copy_puzzle(puz);
-      if (assign(new_puz, row, col, vals[0])) {
-        free_puzzle(puz);
-        puz = new_puz;
-      }
-      else {
-        free_puzzle(new_puz);
+  for (i = 0; i < NUM_DIGITS; i++) {
+    for (row = 0; row < NUM_ROWS; row++) {
+      for (col = 0; col < NUM_COLS; col++) {
+        vals = puz->squares[row][col].vals;
+        if (strlen(vals) == 1) {
+          eliminate(puz, row, col);
+        }
       }
     }
   }
@@ -160,56 +154,56 @@ static puzzle_t *search(puzzle_t *puz) {
 /* Constraint propagation */
 /**************************/
 
-static int assign(puzzle_t *puz, int row, int col, char val) {
-  int i, r = 1;
-  char *vals = puz->squares[row][col].vals;
-  for (i = 0; i < strlen(vals); i++) {
-    if (vals[i] != val)
-      r &= eliminate(puz, row, col, vals[i]);
-  }
-  return r;
-}
+/*static int assign(puzzle_t *puz, int row, int col, char val) {
+  
+}*/
 
-static int eliminate(puzzle_t *puz, int row, int col, char val) {
-  char *vals = puz->squares[row][col].vals;
-
-  // if val is already eliminated
-  if (strchr(vals, val) == NULL)
-    return 1;
-
-  remove_char(vals, val);
+static int eliminate(puzzle_t *puz, int row, int col) {
+  square_t *square = &(puz->squares[row][col]);
 
   // (1) If a square is reduced to one value, then eliminate
   //     it from the peers
   //
-  if (strlen(vals) == 0) // contradiction
-    return 0;
-  else if (strlen(vals) == 1) {
-    char *val2;
-    int i, c_row, c_col, r;
-    strcpy(val2, vals);
-    for (i = 0; i < NUM_PEERS; i++) {
-      c_row = puz->squares[row][col].peers[i]->row;
-      c_col = puz->squares[row][col].peers[i]->col;
-      if (!eliminate(puz, c_row, c_col, val2[0]))
-        return 0;
+  int p;
+  for (p = 0; p < NUM_PEERS; p++) {
+    remove_char(square->peers[p]->vals, square->vals[0]);
+    if (!strlen(square->peers[p]->vals)) {
+      return 0;
     }
   }
 
   // (2) If a unit is reduced to only one place for a value,
   //     then put it there
   //
-  int u, d, d_places = 0;
+  int u,d,v,index;
+  int num_count[NUM_DIGITS] = {0};
+  square_t *num_links[NUM_DIGITS] = {NULL};
   for (u = 0; u < NUM_UNITS; u++) {
     for (d = 0; d < NUM_DIGITS; d++) {
-      if (strchr(puz->squares[row][col].units[u][d]->vals, val)) {
-        d_places ++;
+      for (v = 0; v < strlen(square->units[u][d]->vals); v++) {
+        // Test this line!
+        index = (int)(square->units[u][d]->vals[v] - '0' - 1);
+        num_count[index]++;
+        num_links[index] = square->units[u][d];
       }
-      if (d_places == 1) ;
-      // [TODO: Create proper implementation of this]
     }
   }
+
+  char digit;
+  int count = 0;
+  for (u = 0; u < NUM_DIGITS; u++) {
+    if (num_count[u] == 1) {
+      count ++;
+      digit = u + 1 + '0';
+      num_links[u]->vals[0] = digit;
+      num_links[u]->vals[1] = '\0';
+    }
+  }
+
+  return 1;
 }
+
+//static void propogate(puzzle_t *)
 
 /*****************************************/
 /* Misc (e.g., utility) functions follow */
