@@ -40,6 +40,8 @@ static int propogate(puzzle_t *puz);
 
 static void set_init_vals(puzzle_t *puz, int row, int col, char val);
 static void remove_char(char *str, const char rem);
+static int solved(puzzle_t *puz);
+static square_t *find_search_candidate(puzzle_t *puz);
 
 /*************************/
 /* Public solve function */
@@ -109,7 +111,7 @@ static void free_puzzle(puzzle_t *puz) {
 
 static puzzle_t *copy_puzzle(puzzle_t *puz) {
   puzzle_t *new_puz = malloc(sizeof(puzzle_t));
-  memcpy(new_puz, puz, sizeof(puzzle_t));
+  new_puz = memcpy(new_puz, puz, sizeof(puzzle_t));
   // then re-initialize peers
   int x,y;
   for (x=0; x < NUM_COLS; x++) {
@@ -136,17 +138,32 @@ void print_puzzle(puzzle_t *p) {
 /**********/
 
 static puzzle_t *search(puzzle_t *puz) {
-  propogate(puz);
-  return puz;
+  if (!propogate(puz)) {
+    return NULL;
+  }
+  if (solved(puz)) {
+    return puz;
+  }
+  // copy puzzle
+  puzzle_t *new_puz = copy_puzzle(puz);
+  // find best candidate
+  square_t *best = find_search_candidate(new_puz);
+  char *old_vals = malloc(sizeof(char) * NUM_DIGITS);
+  strncpy(old_vals, best->vals, NUM_DIGITS + 1);
+  int val;
+  for (val = 0; val < strlen(old_vals); val++) {
+    best->vals[0] = old_vals[val];
+    best->vals[1] = '\0';
+    if (search(new_puz) != NULL) {
+      free_puzzle(puz);
+      return new_puz;
+    }
+  }
 }
 
 /**************************/
 /* Constraint propagation */
 /**************************/
-
-/*static int assign(puzzle_t *puz, int row, int col, char val) {
-  
-}*/
 
 static int eliminate(puzzle_t *puz, int row, int col) {
   square_t *square = &(puz->squares[row][col]);
@@ -234,4 +251,34 @@ static void remove_char(char *str, const char rem) {
     if (*dst != rem) dst++;
   }
   *dst = '\0';
+}
+
+static int solved(puzzle_t *puz) {
+  int row, col;
+  for (row = 0; row < NUM_ROWS; row++) {
+    for (col = 0; col < NUM_COLS; col++) {
+      if (strlen(puz->squares[row][col].vals) != 1)
+        return 0;
+    }
+  }
+  return 1;
+}
+
+static square_t *find_search_candidate(puzzle_t *puz) {
+  int row, col, size;
+  square_t *best = NULL;
+  int best_size = NUM_DIGITS + 1;
+  for (row = 0; row < NUM_ROWS; row++) {
+    for (col = 0; col < NUM_COLS; col++) {
+      size = strlen(puz->squares[row][col].vals);
+      if (size == 2) {
+        return &(puz->squares[row][col]);
+      }
+      else if (size > 2 && size < best_size) {
+        best = &(puz->squares[row][col]);
+        best_size = size;
+      }
+    }
+  }
+  return best;
 }
