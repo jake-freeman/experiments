@@ -36,6 +36,7 @@ static void print_puzzle(puzzle_t *);
 
 static puzzle_t *search(puzzle_t *puz);
 static int eliminate(puzzle_t *puz, int row, int col);
+static int propogate(puzzle_t *puz);
 
 static void set_init_vals(puzzle_t *puz, int row, int col, char val);
 static void remove_char(char *str, const char rem);
@@ -135,18 +136,7 @@ void print_puzzle(puzzle_t *p) {
 /**********/
 
 static puzzle_t *search(puzzle_t *puz) {
-  int row, col, i;
-  char *vals;
-  for (i = 0; i < NUM_DIGITS; i++) {
-    for (row = 0; row < NUM_ROWS; row++) {
-      for (col = 0; col < NUM_COLS; col++) {
-        vals = puz->squares[row][col].vals;
-        if (strlen(vals) == 1) {
-          eliminate(puz, row, col);
-        }
-      }
-    }
-  }
+  propogate(puz);
   return puz;
 }
 
@@ -203,7 +193,22 @@ static int eliminate(puzzle_t *puz, int row, int col) {
   return 1;
 }
 
-//static void propogate(puzzle_t *)
+static int propogate(puzzle_t *puz) {
+  int row, col, i;
+  char *vals;
+  for (i = 0; i < NUM_DIGITS; i++) {
+    for (row = 0; row < NUM_ROWS; row++) {
+      for (col = 0; col < NUM_COLS; col++) {
+        vals = puz->squares[row][col].vals;
+        if (strlen(vals) == 1) {
+          if (!eliminate(puz, row, col))
+            return 0;
+        }
+      }
+    }
+  }
+  return 1;
+}
 
 /*****************************************/
 /* Misc (e.g., utility) functions follow */
