@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "sudoku.h"
 
 #define NUM_DIGITS 9
@@ -53,7 +54,7 @@ void solve(unsigned char grid[9][9]) {
   if ((solved = search(puz)) != NULL) {
     print_puzzle(solved);
   }
-  free_puzzle(puz);
+  //free_puzzle(puz);
 }
 
 /*******************************************/
@@ -144,21 +145,33 @@ static puzzle_t *search(puzzle_t *puz) {
   if (solved(puz)) {
     return puz;
   }
-  // copy puzzle
-  puzzle_t *new_puz = copy_puzzle(puz);
   // find best candidate
-  square_t *best = find_search_candidate(new_puz);
-  char *old_vals = malloc(sizeof(char) * NUM_DIGITS);
-  strncpy(old_vals, best->vals, NUM_DIGITS + 1);
+  square_t *best = find_search_candidate(puz);
+  char *old_vals = strndup(best->vals, NUM_DIGITS);
+  assert(strlen(old_vals) == strlen(best->vals));
   int val;
   for (val = 0; val < strlen(old_vals); val++) {
-    best->vals[0] = old_vals[val];
-    best->vals[1] = '\0';
-    if (search(new_puz) != NULL) {
-      free_puzzle(puz);
-      return new_puz;
+    puzzle_t *copy = copy_puzzle(puz);
+    assert(copy != puz);
+    copy->squares[best->row][best->col].vals[0] = old_vals[val];
+    copy->squares[best->row][best->col].vals[1] = '\0';
+    puzzle_t *return_puz;
+    if ((return_puz = search(copy)) != NULL) {
+      if (!solved(copy)) {
+        //free_puzzle(copy);
+        if ((puz != return_puz) && (puz != copy)) {
+          free_puzzle(puz);
+        }
+        else if ((copy != puz) && (copy != return_puz)) {
+          free_puzzle(copy);
+        }
+      }
+      //free_puzzle(copy);
+      return return_puz;
     }
+    free_puzzle(copy);
   }
+  return NULL;
 }
 
 /**************************/
@@ -211,9 +224,9 @@ static int eliminate(puzzle_t *puz, int row, int col) {
 }
 
 static int propogate(puzzle_t *puz) {
-  int row, col, i;
+  int row, col/*, i*/;
   char *vals;
-  for (i = 0; i < NUM_DIGITS; i++) {
+  //for (i = 0; i < NUM_DIGITS; i++) {
     for (row = 0; row < NUM_ROWS; row++) {
       for (col = 0; col < NUM_COLS; col++) {
         vals = puz->squares[row][col].vals;
@@ -223,7 +236,7 @@ static int propogate(puzzle_t *puz) {
         }
       }
     }
-  }
+  //}
   return 1;
 }
 
