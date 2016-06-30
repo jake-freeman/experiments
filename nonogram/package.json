@@ -1,0 +1,15 @@
+{
+  "name": "nonogram-solver",
+  "version": "0.0.0",
+  "description": "Solves nonograms",
+  "main": "solver.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "lodash": "4.13.1"
+  },
+  "author": "jake-freeman",
+  "private": true,
+  "license": "MIT"
+}
