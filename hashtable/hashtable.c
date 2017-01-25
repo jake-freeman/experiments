@@ -24,7 +24,16 @@ hashtable_t *make_hashtable(unsigned long size) {
 void ht_put(hashtable_t *ht, char *key, void *val) {
   /* FIXME: the current implementation doesn't update existing entries */
   unsigned int idx = hash(key) % ht->size;
-  bucket_t *b = malloc(sizeof(bucket_t));
+  bucket_t *b = ht->buckets[idx];
+  while (b) {
+    if (strcmp(b->key, key) == 0) {
+      b->val = val;
+      return ;
+    }
+    b = b->next;
+  }
+
+  b = malloc(sizeof(bucket_t));
   b->key = key;
   b->val = val;
   b->next = ht->buckets[idx];
@@ -58,6 +67,16 @@ void ht_iter(hashtable_t *ht, int (*f)(char *, void *)) {
 }
 
 void free_hashtable(hashtable_t *ht) {
+  bucket_t *b, *next;
+  unsigned long i;
+  for (i = 0; i < ht->size; i++) {
+    while (b) {
+      next = b->next;
+      free(b);
+      b = next;
+    }
+  }
+
   free(ht); // FIXME: must free all substructures!
 }
 
