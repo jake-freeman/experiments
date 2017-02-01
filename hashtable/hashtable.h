@@ -15,6 +15,9 @@ struct hashtable {
   bucket_t **buckets;
 };
 
+// from main
+int print_iter(char *key, void *val);
+
 unsigned long hash(char *str);
 
 hashtable_t *make_hashtable(unsigned long size);

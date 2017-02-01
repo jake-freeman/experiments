@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "hashtable.h"
 
 /* Daniel J. Bernstein's "times 33" string hash function, from comp.lang.C;
@@ -17,7 +18,7 @@ unsigned long hash(char *str) {
 hashtable_t *make_hashtable(unsigned long size) {
   hashtable_t *ht = malloc(sizeof(hashtable_t));
   ht->size = size;
-  ht->buckets = calloc(sizeof(bucket_t *), size);
+  ht->buckets = calloc(size, sizeof(bucket_t *));
   return ht;
 }
 
@@ -70,19 +71,57 @@ void free_hashtable(hashtable_t *ht) {
   bucket_t *b, *next;
   unsigned long i;
   for (i = 0; i < ht->size; i++) {
+    b = ht->buckets[i];
     while (b) {
+      next = b->next;
+      free(b->key);
+      free(b->val);
+      free(b);
+      b = next;
+    }
+  }
+
+  free(ht);
+}
+
+/* TODO */
+void  ht_del(hashtable_t *ht, char *key) {
+  unsigned int idx = hash(key) % ht->size;
+  bucket_t *b = ht->buckets[idx],
+           *b_last = NULL;
+  while (b) {
+    if (strcmp(b->key, key) == 0) {
+      if (b_last == NULL) {
+        ht->buckets[idx] = b->next;
+      }
+      else {
+        b_last->next = b->next;
+      }
+      free(b);
+      return ;
+    }
+    b_last = b;
+    b = b->next;
+  }
+}
+
+void  ht_rehash(hashtable_t *ht, unsigned long newsize) {
+  hashtable_t *new_ht = make_hashtable(newsize);
+
+  // iterate through old table and insert into new
+  bucket_t *b, *next;
+  unsigned long i;
+  for (i = 0; i < ht->size; i++) {
+    b = ht->buckets[i];
+    while (b) {
+      ht_put(new_ht, b->key, b->val);
       next = b->next;
       free(b);
       b = next;
     }
   }
 
-  free(ht); // FIXME: must free all substructures!
-}
-
-/* TODO */
-void  ht_del(hashtable_t *ht, char *key) {
-}
-
-void  ht_rehash(hashtable_t *ht, unsigned long newsize) {
+  ht->buckets = new_ht->buckets;
+  ht->size = new_ht->size;
+  free(new_ht);
 }
